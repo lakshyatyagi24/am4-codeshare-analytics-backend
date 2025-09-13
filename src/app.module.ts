@@ -1,26 +1,34 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { User } from './user/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'ep-flat-fog-adwk0pl3-pooler.c-2.us-east-1.aws.neon.tech',
-      port: 5432,
-      username: 'neondb_owner',
-      password: 'npg_TCAcyIH3J6lm',
-      database: 'am4',
-      ssl: true,
-      extra: {
-        ssl: {
-          rejectUnauthorized: false,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_DATABASE'),
+        ssl: true,
+        extra: {
+          ssl: {
+            rejectUnauthorized: false,
+          },
         },
-      },
-      entities: [User],
-      synchronize: false,
+        entities: [User],
+        synchronize: false,
+      }),
+      inject: [ConfigService],
     }),
   ],
   controllers: [AppController],
